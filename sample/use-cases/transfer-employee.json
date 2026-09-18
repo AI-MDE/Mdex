@@ -1,0 +1,29 @@
+{
+  "type": "use-case",
+  "name": "TransferEmployee",
+  "title": "Transfer Employee",
+  "actor": "Manager",
+  "goal": "Transfer an employee to another department.",
+  "inputs": {
+    "employee": {
+      "entity": "Employee",
+      "required": true
+    },
+    "department": {
+      "entity": "Department",
+      "required": true
+    }
+  },
+  "steps": [
+    {
+      "invoke": {
+        "entity": "$employee",
+        "operation": "transfer",
+        "arguments": {
+          "department": "$department"
+        }
+      }
+    }
+  ],
+  "outcome": "Employee belongs to the selected department."
+}
