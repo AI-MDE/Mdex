@@ -1,0 +1,21 @@
+{
+  "type": "architecture",
+  "name": "DefaultArchitecture",
+  "title": "MDEX Application Architecture",
+  "principles": [
+    "Business behavior is executed through declared entity operations.",
+    "Business rules are enforced by the runtime, not by presentation code.",
+    "References are presented using business labels rather than technical identifiers.",
+    "Generated technical keys are hidden from normal business-facing views.",
+    "Owned child collections are presented in the context of their parent."
+  ],
+  "constraints": {
+    "entitiesRequireKey": true,
+    "referencesMustTargetEntity": true,
+    "operationsMustDeclareAction": true,
+    "useCaseInvokesDeclaredOperations": true,
+    "hideGeneratedKeys": true,
+    "referenceDisplay": "business-label",
+    "childrenDisplay": "tabs"
+  }
+}
