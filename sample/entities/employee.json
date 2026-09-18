@@ -101,5 +101,14 @@
       },
       "message": "A terminated employee cannot be assigned to a department."
     }
+  },
+  "display": "name",
+  "children": {
+    "skills": {
+      "entity": "EmployeeSkill",
+      "foreignKey": "employee",
+      "ownership": "composition",
+      "label": "Skills"
+    }
   }
 }
