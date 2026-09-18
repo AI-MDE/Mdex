@@ -1,17 +1,88 @@
 {
   "Department": [
-    { "departmentId": "dept-engineering", "name": "Engineering" },
-    { "departmentId": "dept-sales", "name": "Sales" }
+    {
+      "departmentId": "dept-engineering",
+      "name": "Engineering"
+    },
+    {
+      "departmentId": "dept-sales",
+      "name": "Sales"
+    }
   ],
   "Employee": [
-    { "employeeId": "emp-ada", "name": "Ada Lovelace", "email": "ada@example.test", "department": "dept-engineering" },
-    { "employeeId": "emp-grace", "name": "Grace Hopper", "email": "grace@example.test", "department": "dept-engineering" },
-    { "employeeId": "emp-alan", "name": "Alan Turing", "email": "alan@example.test", "department": "dept-sales" }
+    {
+      "employeeId": "emp-ada",
+      "name": "Ada Lovelace",
+      "email": "ada@example.test",
+      "department": "dept-engineering"
+    },
+    {
+      "employeeId": "emp-grace",
+      "name": "Grace Hopper",
+      "email": "grace@example.test",
+      "department": "dept-engineering"
+    },
+    {
+      "employeeId": "emp-alan",
+      "name": "Alan Turing",
+      "email": "alan@example.test",
+      "department": "dept-sales"
+    }
   ],
   "$patch": {
     "Department": [
-      { "id": "dept-engineering", "data": { "manager": "emp-grace" } },
-      { "id": "dept-sales", "data": { "manager": "emp-alan" } }
+      {
+        "id": "dept-engineering",
+        "data": {
+          "manager": "emp-grace"
+        }
+      },
+      {
+        "id": "dept-sales",
+        "data": {
+          "manager": "emp-alan"
+        }
+      }
     ]
-  }
+  },
+  "Skill": [
+    {
+      "skillId": "skill-sql",
+      "name": "SQL"
+    },
+    {
+      "skillId": "skill-react",
+      "name": "React"
+    },
+    {
+      "skillId": "skill-javascript",
+      "name": "JavaScript"
+    }
+  ],
+  "EmployeeSkill": [
+    {
+      "employeeSkillId": "es-ada-sql",
+      "employee": "emp-ada",
+      "skill": "skill-sql",
+      "level": "Expert"
+    },
+    {
+      "employeeSkillId": "es-ada-react",
+      "employee": "emp-ada",
+      "skill": "skill-react",
+      "level": "Advanced"
+    },
+    {
+      "employeeSkillId": "es-grace-sql",
+      "employee": "emp-grace",
+      "skill": "skill-sql",
+      "level": "Advanced"
+    },
+    {
+      "employeeSkillId": "es-alan-javascript",
+      "employee": "emp-alan",
+      "skill": "skill-javascript",
+      "level": "Expert"
+    }
+  ]
 }
