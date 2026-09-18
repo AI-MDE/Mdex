@@ -2,17 +2,104 @@
   "type": "entity",
   "name": "Employee",
   "key": "employeeId",
+  "stateAttribute": "status",
   "attributes": {
-    "employeeId": { "type": "uuid", "generated": true },
-    "name": { "type": "string", "required": true },
-    "email": { "type": "string", "required": true },
-    "department": { "type": "reference", "entity": "Department" }
+    "employeeId": {
+      "type": "uuid",
+      "generated": true
+    },
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "email": {
+      "type": "string",
+      "required": true
+    },
+    "department": {
+      "type": "reference",
+      "entity": "Department"
+    },
+    "status": {
+      "type": "string",
+      "default": "Active",
+      "readOnly": true
+    }
   },
   "operations": {
-    "create": { "action": "create" },
-    "get": { "action": "get" },
-    "list": { "action": "list" },
-    "update": { "action": "update" },
-    "delete": { "action": "delete" }
+    "create": {
+      "action": "create"
+    },
+    "get": {
+      "action": "get"
+    },
+    "list": {
+      "action": "list"
+    },
+    "update": {
+      "action": "update"
+    },
+    "delete": {
+      "action": "delete"
+    },
+    "transfer": {
+      "action": "custom",
+      "label": "Transfer",
+      "parameters": {
+        "department": {
+          "type": "reference",
+          "entity": "Department",
+          "required": true
+        }
+      },
+      "set": {
+        "department": "$department"
+      },
+      "rules": [
+        "active-only"
+      ]
+    },
+    "terminate": {
+      "action": "transition",
+      "label": "Terminate",
+      "transition": "terminate"
+    }
+  },
+  "states": {
+    "initial": "Active",
+    "values": [
+      "Active",
+      "Terminated"
+    ]
+  },
+  "transitions": {
+    "terminate": {
+      "from": [
+        "Active"
+      ],
+      "to": "Terminated",
+      "rules": [
+        "active-only"
+      ]
+    }
+  },
+  "rules": {
+    "active-only": {
+      "description": "The employee must be active.",
+      "when": {
+        "status": "Active"
+      },
+      "message": "Employee must be active."
+    },
+    "terminated-no-department": {
+      "description": "A terminated employee cannot be assigned to a department.",
+      "when": {
+        "status": "Terminated"
+      },
+      "forbid": {
+        "department": "present"
+      },
+      "message": "A terminated employee cannot be assigned to a department."
+    }
   }
 }
