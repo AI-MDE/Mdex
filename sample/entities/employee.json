@@ -141,6 +141,12 @@
       "foreignKey": "employee",
       "ownership": "composition",
       "label": "Skills"
+    },
+    "assignments": {
+      "entity": "EmployeeAssignment",
+      "foreignKey": "employee",
+      "ownership": "association",
+      "label": "Assignments"
     }
   }
 }
