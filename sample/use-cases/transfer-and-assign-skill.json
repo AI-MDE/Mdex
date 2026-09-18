@@ -1,0 +1,55 @@
+{
+  "type": "use-case",
+  "name": "TransferAndAssignSkill",
+  "title": "Transfer Employee and Assign Skill",
+  "actor": "Manager",
+  "goal": "Transfer an employee to another department and assign a skill at a proficiency level.",
+  "inputs": {
+    "employee": {
+      "entity": "Employee",
+      "required": true
+    },
+    "department": {
+      "entity": "Department",
+      "required": true
+    },
+    "skill": {
+      "entity": "Skill",
+      "required": true
+    },
+    "level": {
+      "type": "enum",
+      "values": [
+        "Beginner",
+        "Intermediate",
+        "Advanced",
+        "Expert"
+      ],
+      "required": true
+    }
+  },
+  "steps": [
+    {
+      "title": "Transfer employee",
+      "invoke": {
+        "entity": "$employee",
+        "operation": "transfer",
+        "arguments": {
+          "department": "$department"
+        }
+      }
+    },
+    {
+      "title": "Assign skill",
+      "invoke": {
+        "entity": "$employee",
+        "operation": "assignSkill",
+        "arguments": {
+          "skill": "$skill",
+          "level": "$level"
+        }
+      }
+    }
+  ],
+  "outcome": "Employee is transferred and the selected skill is assigned."
+}
