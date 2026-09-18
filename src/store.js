@@ -73,7 +73,13 @@ export class MemoryStore {
     this.#checkRules(entity, current, operation.rules);
     const patch = {};
     for (const [name, value] of Object.entries(operation.set ?? {})) patch[name] = typeof value === "string" && value.startsWith("$") ? args[value.slice(1)] : value;
-    return this.update(entityName, id, patch);
+    let result = Object.keys(patch).length ? this.update(entityName, id, patch) : current;
+    if (operation.create) {
+      const data = {};
+      for (const [name, value] of Object.entries(operation.create.data ?? {})) data[name] = value === "$self" ? id : (typeof value === "string" && value.startsWith("$") ? args[value.slice(1)] : value);
+      result = this.create(operation.create.entity, data);
+    }
+    return result;
   }
 
   transition(entityName, id, transitionName) {
