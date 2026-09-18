@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: mdex
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /model
+    autoDeployTrigger: commit
