@@ -53,6 +53,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, value ? 200 : 404, value ?? { error: "Not found" });
     }
     if (req.method === "DELETE" && id) return send(res, store.execute(entity, "delete", { id }) ? 204 : 404);
+    if (req.method === "POST" && id) return send(res, 200, store.execute(entity, decodeURIComponent(id), await body(req)));
     return send(res, 405, { error: "Method not allowed" });
   } catch (error) { return send(res, 400, { error: error.message }); }
 });
