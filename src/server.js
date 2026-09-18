@@ -11,6 +11,9 @@ const root = path.resolve(here, "..");
 const packageInfo = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 const knowledgeDir = process.env.MDE_KNOWLEDGE || path.join(root, "sample/entities");
 const seedFile = process.env.MDE_SEED || path.join(root, "sample/seed/data.json");
+const notesFile = process.env.MDE_NOTES || path.join(root, "sample/annotations/notes.json");
+let notes = fs.existsSync(notesFile) ? JSON.parse(fs.readFileSync(notesFile, "utf8")).notes || [] : [];
+function saveNotes(){ fs.mkdirSync(path.dirname(notesFile),{recursive:true}); fs.writeFileSync(notesFile,JSON.stringify({type:"annotations",notes},null,2)+"\\n"); }
 const entities = loadEntities(knowledgeDir);
 const useCases = loadUseCases(process.env.MDE_USE_CASES || path.join(root, "sample/use-cases"));
 const architecture = loadArchitecture(process.env.MDE_ARCHITECTURE || path.join(root, "sample/architecture/architecture.json"));
@@ -35,6 +38,9 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "GET" && url.pathname === "/model") return send(res, 200, modelObject());
     if (req.method === "GET" && url.pathname === "/use-cases") return send(res, 200, Object.fromEntries(useCases));
     if (req.method === "GET" && url.pathname === "/architecture") return send(res, 200, {architecture,findings:architectureFindings});
+    if (url.pathname === "/notes" && req.method === "GET") { const target=url.searchParams.get("target"); return send(res,200,target?notes.filter(n=>n.target===target):notes); }
+    if (url.pathname === "/notes" && req.method === "POST") { const data=await body(req); if(!data.target||!data.text?.trim()) return send(res,400,{error:"Target and note text are required"}); const note={id:crypto.randomUUID(),target:data.target,text:data.text.trim(),status:"Open",createdAt:new Date().toISOString()}; notes.push(note); saveNotes(); return send(res,201,note); }
+    if (req.method === "PATCH" && url.pathname.startsWith("/notes/")) { const id=decodeURIComponent(url.pathname.split("/")[2]), note=notes.find(n=>n.id===id); if(!note)return send(res,404,{error:"Note not found"}); Object.assign(note,await body(req)); saveNotes(); return send(res,200,note); }
     if (req.method === "POST" && url.pathname.startsWith("/use-cases/") && url.pathname.endsWith("/run")) {
       const name=decodeURIComponent(url.pathname.split("/")[2]), uc=useCases.get(name); if(!uc)return send(res,404,{error:"Unknown use case"});
       const input=await body(req); let result; const results=[];
