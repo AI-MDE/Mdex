@@ -8,6 +8,7 @@ import { loadSeed } from "./seed.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
+const packageInfo = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 const knowledgeDir = process.env.MDE_KNOWLEDGE || path.join(root, "sample/entities");
 const seedFile = process.env.MDE_SEED || path.join(root, "sample/seed/data.json");
 const entities = loadEntities(knowledgeDir);
@@ -30,6 +31,7 @@ const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, "http://localhost");
     if (req.method === "GET" && url.pathname === "/") return html(res, fs.readFileSync(path.join(root, "public/index.html"), "utf8"));
+    if (req.method === "GET" && url.pathname === "/version") return send(res, 200, { version: packageInfo.version });
     if (req.method === "GET" && url.pathname === "/model") return send(res, 200, modelObject());
     if (req.method === "GET" && url.pathname === "/use-cases") return send(res, 200, Object.fromEntries(useCases));
     if (req.method === "GET" && url.pathname === "/architecture") return send(res, 200, {architecture,findings:architectureFindings});
