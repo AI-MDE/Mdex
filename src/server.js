@@ -2,7 +2,7 @@ import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadEntities, loadUseCases } from "./knowledge.js";
+import { loadEntities, loadUseCases, loadArchitecture, validateArchitecture } from "./knowledge.js";
 import { MemoryStore } from "./store.js";
 import { loadSeed } from "./seed.js";
 
@@ -12,6 +12,10 @@ const knowledgeDir = process.env.MDE_KNOWLEDGE || path.join(root, "sample/entiti
 const seedFile = process.env.MDE_SEED || path.join(root, "sample/seed/data.json");
 const entities = loadEntities(knowledgeDir);
 const useCases = loadUseCases(process.env.MDE_USE_CASES || path.join(root, "sample/use-cases"));
+const architecture = loadArchitecture(process.env.MDE_ARCHITECTURE || path.join(root, "sample/architecture/architecture.json"));
+const architectureFindings = validateArchitecture(architecture, entities, useCases);
+const architectureFailures = architectureFindings.filter(x=>x.status==="Fail");
+if (architectureFailures.length) throw new Error("Architecture validation failed: "+architectureFailures.map(x=>x.subject+": "+x.message).join("; "));
 const store = new MemoryStore(entities);
 if (fs.existsSync(seedFile)) loadSeed(store, seedFile);
 
@@ -28,6 +32,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "GET" && url.pathname === "/") return html(res, fs.readFileSync(path.join(root, "public/index.html"), "utf8"));
     if (req.method === "GET" && url.pathname === "/model") return send(res, 200, modelObject());
     if (req.method === "GET" && url.pathname === "/use-cases") return send(res, 200, Object.fromEntries(useCases));
+    if (req.method === "GET" && url.pathname === "/architecture") return send(res, 200, {architecture,findings:architectureFindings});
     if (req.method === "POST" && url.pathname.startsWith("/use-cases/") && url.pathname.endsWith("/run")) {
       const name=decodeURIComponent(url.pathname.split("/")[2]), uc=useCases.get(name); if(!uc)return send(res,404,{error:"Unknown use case"});
       const input=await body(req); let result; const results=[];
