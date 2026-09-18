@@ -63,6 +63,38 @@
       "action": "transition",
       "label": "Terminate",
       "transition": "terminate"
+    },
+    "assignSkill": {
+      "action": "custom",
+      "label": "Assign Skill",
+      "parameters": {
+        "skill": {
+          "type": "reference",
+          "entity": "Skill",
+          "required": true
+        },
+        "level": {
+          "type": "enum",
+          "values": [
+            "Beginner",
+            "Intermediate",
+            "Advanced",
+            "Expert"
+          ],
+          "required": true
+        }
+      },
+      "create": {
+        "entity": "EmployeeSkill",
+        "data": {
+          "employee": "$self",
+          "skill": "$skill",
+          "level": "$level"
+        }
+      },
+      "rules": [
+        "active-only"
+      ]
     }
   },
   "states": {
