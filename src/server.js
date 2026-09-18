@@ -54,4 +54,5 @@ function body(req){return new Promise((resolve,reject)=>{let raw="";req.on("data
 function send(res,status,value){res.statusCode=status;if(status===204)return res.end();res.setHeader("content-type","application/json");res.end(JSON.stringify(value))}
 function html(res,value){res.statusCode=200;res.setHeader("content-type","text/html; charset=utf-8");res.end(value)}
 const port=Number(process.env.PORT||3090);
-server.listen(port,()=>console.log(`MDE Runtime Workbench: http://localhost:${port}`));
+const host = process.env.HOST || "0.0.0.0";
+server.listen(port, host, ()=>console.log(`MDE Runtime Workbench listening on ${host}:${port}`));
