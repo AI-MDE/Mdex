@@ -84,5 +84,43 @@
       "skill": "skill-javascript",
       "level": "Expert"
     }
+  ],
+  "Project": [
+    {
+      "projectId": "project-apollo",
+      "name": "Apollo",
+      "status": "Active"
+    },
+    {
+      "projectId": "project-orion",
+      "name": "Orion",
+      "status": "Active"
+    }
+  ],
+  "EmployeeAssignment": [
+    {
+      "assignmentId": "assign-ada-apollo",
+      "project": "project-apollo",
+      "employee": "emp-ada",
+      "allocation": 60,
+      "role": "Developer",
+      "status": "Active"
+    },
+    {
+      "assignmentId": "assign-grace-apollo",
+      "project": "project-apollo",
+      "employee": "emp-grace",
+      "allocation": 40,
+      "role": "Technical Lead",
+      "status": "Active"
+    },
+    {
+      "assignmentId": "assign-alan-orion",
+      "project": "project-orion",
+      "employee": "emp-alan",
+      "allocation": 80,
+      "role": "Analyst",
+      "status": "Active"
+    }
   ]
 }
