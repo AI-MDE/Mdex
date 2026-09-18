@@ -1,0 +1,50 @@
+{
+  "type": "entity",
+  "name": "Project",
+  "key": "projectId",
+  "display": "name",
+  "attributes": {
+    "projectId": {
+      "type": "uuid",
+      "generated": true
+    },
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "status": {
+      "type": "enum",
+      "values": [
+        "Planned",
+        "Active",
+        "Completed"
+      ],
+      "default": "Active"
+    }
+  },
+  "operations": {
+    "create": {
+      "action": "create"
+    },
+    "get": {
+      "action": "get"
+    },
+    "list": {
+      "action": "list"
+    },
+    "update": {
+      "action": "update"
+    },
+    "delete": {
+      "action": "delete"
+    }
+  },
+  "children": {
+    "assignments": {
+      "entity": "EmployeeAssignment",
+      "foreignKey": "project",
+      "ownership": "composition",
+      "label": "Assignments"
+    }
+  }
+}
