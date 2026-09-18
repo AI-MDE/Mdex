@@ -1,0 +1,49 @@
+{
+  "type": "entity",
+  "name": "EmployeeSkill",
+  "key": "employeeSkillId",
+  "display": "skill",
+  "attributes": {
+    "employeeSkillId": {
+      "type": "uuid",
+      "generated": true
+    },
+    "employee": {
+      "type": "reference",
+      "entity": "Employee",
+      "required": true
+    },
+    "skill": {
+      "type": "reference",
+      "entity": "Skill",
+      "required": true
+    },
+    "level": {
+      "type": "enum",
+      "values": [
+        "Beginner",
+        "Intermediate",
+        "Advanced",
+        "Expert"
+      ],
+      "required": true
+    }
+  },
+  "operations": {
+    "create": {
+      "action": "create"
+    },
+    "get": {
+      "action": "get"
+    },
+    "list": {
+      "action": "list"
+    },
+    "update": {
+      "action": "update"
+    },
+    "delete": {
+      "action": "delete"
+    }
+  }
+}
