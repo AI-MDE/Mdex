@@ -4,6 +4,7 @@ export class MemoryStore {
   constructor(entities) {
     this.entities = entities;
     this.data = new Map([...entities.keys()].map(name => [name, new Map()]));
+    this.historyData = new Map([...entities.keys()].map(name => [name, new Map()]));
   }
 
   execute(entityName, operationName, args = {}) {
@@ -11,18 +12,18 @@ export class MemoryStore {
     const operation = entity.operations?.[operationName];
     if (!operation) throw new Error(`Unknown operation: ${entityName}.${operationName}`);
     switch (operation.action) {
-      case "create": return this.create(entityName, args.data ?? args);
+      case "create": return this.create(entityName, args.data ?? args, args.actor);
       case "get": return this.get(entityName, args.id);
       case "list": return this.list(entityName, args.where);
-      case "update": return this.update(entityName, args.id, args.data ?? {});
-      case "delete": return this.delete(entityName, args.id);
-      case "custom": return this.custom(entityName, operationName, args.id, args.data ?? args);
-      case "transition": return this.transition(entityName, args.id, operation.transition);
+      case "update": return this.update(entityName, args.id, args.data ?? {}, args.actor);
+      case "delete": return this.delete(entityName, args.id, args.actor);
+      case "custom": return this.custom(entityName, operationName, args.id, args.data ?? args, args.actor);
+      case "transition": return this.transition(entityName, args.id, operation.transition, args.actor);
       default: throw new Error(`Unsupported operation action: ${operation.action}`);
     }
   }
 
-  create(entityName, input) {
+  create(entityName, input, actor="System") {
     const entity = this.#entity(entityName);
     const record = {};
     for (const [name, spec] of Object.entries(entity.attributes)) {
@@ -35,7 +36,9 @@ export class MemoryStore {
     }
     const key = record[entity.key];
     if (!key) throw new Error(`Missing key ${entity.key}`);
+    if (entity.architectureFeatures?.auditStamp) { const now=new Date().toISOString();record._audit={createdAt:now,createdBy:actor,updatedAt:now,updatedBy:actor}; }
     this.data.get(entityName).set(key, record);
+    this.#recordHistory(entityName,key,"create",record,actor);
     return record;
   }
 
@@ -48,7 +51,7 @@ export class MemoryStore {
 
   get(entityName, id) { this.#entity(entityName); return this.data.get(entityName).get(id); }
 
-  update(entityName, id, patch) {
+  update(entityName, id, patch, actor="System") {
     const entity = this.#entity(entityName);
     const current = this.get(entityName, id);
     if (!current) return undefined;
@@ -60,29 +63,37 @@ export class MemoryStore {
       current[name] = value;
     }
     this.#checkConstraints(entity, current);
+    if(entity.architectureFeatures?.auditStamp)current._audit={createdAt:current._audit?.createdAt||new Date().toISOString(),createdBy:current._audit?.createdBy||actor,updatedAt:new Date().toISOString(),updatedBy:actor};
+    this.#recordHistory(entityName,id,"update",current,actor);
     return current;
   }
 
-  delete(entityName, id) { this.#entity(entityName); return this.data.get(entityName).delete(id); }
+  delete(entityName, id, actor="System") { this.#entity(entityName);const current=this.get(entityName,id);if(current)this.#recordHistory(entityName,id,"delete",current,actor);return this.data.get(entityName).delete(id); }
+
+  history(entityName,id){this.#entity(entityName);return this.historyData.get(entityName).get(id)||[];}
+
+  snapshot(){return {type:"data",records:Object.fromEntries([...this.data].map(([name,records])=>[name,[...records.values()]])),history:Object.fromEntries([...this.historyData].map(([name,records])=>[name,Object.fromEntries(records)]))};}
+
+  hydrate(snapshot){for(const [name,records] of Object.entries(snapshot.records||{})){const entity=this.#entity(name),target=this.data.get(name);for(const record of records){const key=record[entity.key];if(!key)throw new Error(`Missing key ${entity.key}`);target.set(key,record)}}for(const [name,records] of Object.entries(snapshot.history||{})){this.#entity(name);const target=this.historyData.get(name);for(const [id,events] of Object.entries(records))target.set(id,events)}}
 
 
-  custom(entityName, operationName, id, args = {}) {
+  custom(entityName, operationName, id, args = {}, actor="System") {
     const entity = this.#entity(entityName), operation = entity.operations[operationName];
     const current = this.get(entityName, id);
     if (!current) return undefined;
     this.#checkRules(entity, current, operation.rules);
     const patch = {};
     for (const [name, value] of Object.entries(operation.set ?? {})) patch[name] = typeof value === "string" && value.startsWith("$") ? args[value.slice(1)] : value;
-    let result = Object.keys(patch).length ? this.update(entityName, id, patch) : current;
+    let result = Object.keys(patch).length ? this.update(entityName, id, patch, actor) : current;
     if (operation.create) {
       const data = {};
       for (const [name, value] of Object.entries(operation.create.data ?? {})) data[name] = value === "$self" ? id : (typeof value === "string" && value.startsWith("$") ? args[value.slice(1)] : value);
-      result = this.create(operation.create.entity, data);
+      result = this.create(operation.create.entity, data, actor);
     }
     return result;
   }
 
-  transition(entityName, id, transitionName) {
+  transition(entityName, id, transitionName, actor="System") {
     const entity = this.#entity(entityName), transition = entity.transitions?.[transitionName], current = this.get(entityName, id);
     if (!current) return undefined;
     if (!transition) throw new Error(`Unknown transition: ${entityName}.${transitionName}`);
@@ -91,8 +102,12 @@ export class MemoryStore {
     this.#checkRules(entity, current, transition.rules);
     current[stateName] = transition.to;
     this.#checkConstraints(entity, current);
+    if(entity.architectureFeatures?.auditStamp)current._audit={createdAt:current._audit?.createdAt||new Date().toISOString(),createdBy:current._audit?.createdBy||actor,updatedAt:new Date().toISOString(),updatedBy:actor};
+    this.#recordHistory(entityName,id,"transition",current,actor);
     return current;
   }
+
+  #recordHistory(entityName,id,action,record,actor){if(!this.#entity(entityName).architectureFeatures?.trackHistory)return;const history=this.historyData.get(entityName),events=history.get(id)||[];events.push({action,at:new Date().toISOString(),actor,record:structuredClone(record)});history.set(id,events);}
 
   #checkRules(entity, record, names = []) {
     for (const name of names) {

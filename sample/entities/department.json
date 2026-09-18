@@ -3,15 +3,38 @@
   "name": "Department",
   "key": "departmentId",
   "attributes": {
-    "departmentId": { "type": "uuid", "generated": true },
-    "name": { "type": "string", "required": true },
-    "manager": { "type": "reference", "entity": "Employee" }
+    "departmentId": {
+      "type": "uuid",
+      "generated": true
+    },
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "manager": {
+      "type": "reference",
+      "entity": "Employee"
+    }
   },
   "operations": {
-    "create": { "action": "create" },
-    "get": { "action": "get" },
-    "list": { "action": "list" },
-    "update": { "action": "update" },
-    "delete": { "action": "delete" }
+    "create": {
+      "action": "create"
+    },
+    "get": {
+      "action": "get"
+    },
+    "list": {
+      "action": "list"
+    },
+    "update": {
+      "action": "update"
+    },
+    "delete": {
+      "action": "delete"
+    }
+  },
+  "architectureFeatures": {
+    "auditStamp": true,
+    "trackHistory": true
   }
 }

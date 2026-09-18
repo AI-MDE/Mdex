@@ -1,0 +1,205 @@
+{
+  "type": "data",
+  "records": {
+    "Department": [
+      {
+        "departmentId": "dept-engineering",
+        "name": "Engineering",
+        "_audit": {
+          "createdAt": "2026-09-18T23:12:32.975Z",
+          "createdBy": "System",
+          "updatedAt": "2026-09-18T23:12:32.979Z",
+          "updatedBy": "System"
+        },
+        "manager": "emp-grace"
+      },
+      {
+        "departmentId": "dept-sales",
+        "name": "Sales",
+        "_audit": {
+          "createdAt": "2026-09-18T23:12:32.978Z",
+          "createdBy": "System",
+          "updatedAt": "2026-09-18T23:12:32.980Z",
+          "updatedBy": "System"
+        },
+        "manager": "emp-alan"
+      }
+    ],
+    "EmployeeAssignment": [
+      {
+        "assignmentId": "assign-ada-apollo",
+        "project": "project-apollo",
+        "employee": "emp-ada",
+        "allocation": 60,
+        "role": "Developer",
+        "status": "Active"
+      },
+      {
+        "assignmentId": "assign-grace-apollo",
+        "project": "project-apollo",
+        "employee": "emp-grace",
+        "allocation": 40,
+        "role": "Technical Lead",
+        "status": "Active"
+      },
+      {
+        "assignmentId": "assign-alan-orion",
+        "project": "project-orion",
+        "employee": "emp-alan",
+        "allocation": 80,
+        "role": "Analyst",
+        "status": "Active"
+      }
+    ],
+    "EmployeeSkill": [
+      {
+        "employeeSkillId": "es-ada-sql",
+        "employee": "emp-ada",
+        "skill": "skill-sql",
+        "level": "Advanced"
+      },
+      {
+        "employeeSkillId": "es-ada-react",
+        "employee": "emp-ada",
+        "skill": "skill-react",
+        "level": "Advanced"
+      },
+      {
+        "employeeSkillId": "es-grace-sql",
+        "employee": "emp-grace",
+        "skill": "skill-sql",
+        "level": "Advanced"
+      },
+      {
+        "employeeSkillId": "es-alan-javascript",
+        "employee": "emp-alan",
+        "skill": "skill-javascript",
+        "level": "Expert"
+      }
+    ],
+    "Employee": [
+      {
+        "employeeId": "emp-ada",
+        "name": "Ada Lovelace",
+        "email": "ada@example.test",
+        "department": "dept-sales",
+        "status": "Active"
+      },
+      {
+        "employeeId": "emp-grace",
+        "name": "Grace Hopper",
+        "email": "grace@example.test",
+        "department": "dept-sales",
+        "status": "Active"
+      },
+      {
+        "employeeId": "emp-alan",
+        "name": "Alan Turing",
+        "email": "alan@example.test",
+        "department": "dept-sales",
+        "status": "Active"
+      }
+    ],
+    "Project": [
+      {
+        "projectId": "project-apollo",
+        "name": "Apollo",
+        "status": "Active"
+      },
+      {
+        "projectId": "project-orion",
+        "name": "Orion",
+        "status": "Active"
+      }
+    ],
+    "Skill": [
+      {
+        "skillId": "skill-sql",
+        "name": "SQL"
+      },
+      {
+        "skillId": "skill-react",
+        "name": "React"
+      },
+      {
+        "skillId": "skill-javascript",
+        "name": "JavaScript"
+      }
+    ]
+  },
+  "history": {
+    "Department": {
+      "dept-engineering": [
+        {
+          "action": "create",
+          "at": "2026-09-18T23:12:32.978Z",
+          "actor": "System",
+          "record": {
+            "departmentId": "dept-engineering",
+            "name": "Engineering",
+            "_audit": {
+              "createdAt": "2026-09-18T23:12:32.975Z",
+              "createdBy": "System",
+              "updatedAt": "2026-09-18T23:12:32.975Z",
+              "updatedBy": "System"
+            }
+          }
+        },
+        {
+          "action": "update",
+          "at": "2026-09-18T23:12:32.979Z",
+          "actor": "System",
+          "record": {
+            "departmentId": "dept-engineering",
+            "name": "Engineering",
+            "_audit": {
+              "createdAt": "2026-09-18T23:12:32.975Z",
+              "createdBy": "System",
+              "updatedAt": "2026-09-18T23:12:32.979Z",
+              "updatedBy": "System"
+            },
+            "manager": "emp-grace"
+          }
+        }
+      ],
+      "dept-sales": [
+        {
+          "action": "create",
+          "at": "2026-09-18T23:12:32.978Z",
+          "actor": "System",
+          "record": {
+            "departmentId": "dept-sales",
+            "name": "Sales",
+            "_audit": {
+              "createdAt": "2026-09-18T23:12:32.978Z",
+              "createdBy": "System",
+              "updatedAt": "2026-09-18T23:12:32.978Z",
+              "updatedBy": "System"
+            }
+          }
+        },
+        {
+          "action": "update",
+          "at": "2026-09-18T23:12:32.980Z",
+          "actor": "System",
+          "record": {
+            "departmentId": "dept-sales",
+            "name": "Sales",
+            "_audit": {
+              "createdAt": "2026-09-18T23:12:32.978Z",
+              "createdBy": "System",
+              "updatedAt": "2026-09-18T23:12:32.980Z",
+              "updatedBy": "System"
+            },
+            "manager": "emp-alan"
+          }
+        }
+      ]
+    },
+    "EmployeeAssignment": {},
+    "EmployeeSkill": {},
+    "Employee": {},
+    "Project": {},
+    "Skill": {}
+  }
+}
