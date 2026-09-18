@@ -1,0 +1,18 @@
+{
+  "type": "entity",
+  "name": "Employee",
+  "key": "employeeId",
+  "attributes": {
+    "employeeId": { "type": "uuid", "generated": true },
+    "name": { "type": "string", "required": true },
+    "email": { "type": "string", "required": true },
+    "department": { "type": "reference", "entity": "Department" }
+  },
+  "operations": {
+    "create": { "action": "create" },
+    "get": { "action": "get" },
+    "list": { "action": "list" },
+    "update": { "action": "update" },
+    "delete": { "action": "delete" }
+  }
+}
