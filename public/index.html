@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MDE Runtime Workbench</title>
+  <style>
+    body{font:14px system-ui;margin:0;color:#202124}header{padding:16px 22px;border-bottom:1px solid #ddd;font-size:20px;font-weight:650}
+    main{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 58px)}nav{border-right:1px solid #ddd;padding:14px}
+    nav button{display:block;width:100%;text-align:left;padding:9px;border:0;background:none;border-radius:6px;cursor:pointer}nav button:hover{background:#eee}
+    section{padding:22px}table{border-collapse:collapse;width:100%}th,td{border-bottom:1px solid #ddd;padding:9px;text-align:left}a{cursor:pointer;text-decoration:underline}
+    .card{max-width:760px}.field{display:grid;grid-template-columns:180px 1fr;padding:9px 0;border-bottom:1px solid #eee}.muted{color:#666}
+  </style>
+</head>
+<body><header>MDE Runtime Workbench</header><main><nav id="entities"></nav><section id="content">Loading model…</section></main>
+<script>
+let model;
+async function api(path, options){const r=await fetch(path,options); if(!r.ok)throw new Error(await r.text()); return r.status===204?null:r.json()}
+function esc(v){return String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+async function start(){
+ model=await api("/model");
+ entities.innerHTML=Object.keys(model).map(n=>`<button onclick="list('${n}')">${n}</button>`).join("");
+ const first=Object.keys(model)[0]; if(first)list(first);
+}
+async function list(name){
+ const rows=await api("/data/"+name); const e=model[name]; const attrs=Object.keys(e.attributes);
+ content.innerHTML=`<h2>${name}</h2><p class="muted">${rows.length} records · operations: ${Object.keys(e.operations||{}).join(", ")}</p><table><thead><tr>${attrs.map(a=>`<th>${a}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${attrs.map(a=>`<td>${cell(e,a,r[a],r[e.key])}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+}
+function cell(e,a,v,id){
+ const spec=e.attributes[a];
+ if(a===e.key)return `<a onclick="show('${e.name}','${esc(id)}')">${esc(v)}</a>`;
+ if(spec.type==="reference"&&v)return `<a onclick="show('${spec.entity}','${esc(v)}')">${esc(v)}</a>`;
+ return esc(v);
+}
+async function show(name,id){
+ const r=await api("/data/"+name+"/"+encodeURIComponent(id)); const e=model[name];
+ content.innerHTML=`<div class="card"><p><a onclick="list('${name}')">← ${name}</a></p><h2>${esc(r.name||id)}</h2>${Object.entries(e.attributes).map(([a,s])=>`<div class="field"><strong>${a}</strong><span>${s.type==="reference"&&r[a]?`<a onclick="show('${s.entity}','${esc(r[a])}')">${esc(r[a])} →</a>`:esc(r[a])}</span></div>`).join("")}</div>`;
+}
+start().catch(e=>content.textContent=e.message);
+</script></body></html>
