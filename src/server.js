@@ -30,9 +30,9 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "GET" && url.pathname === "/use-cases") return send(res, 200, Object.fromEntries(useCases));
     if (req.method === "POST" && url.pathname.startsWith("/use-cases/") && url.pathname.endsWith("/run")) {
       const name=decodeURIComponent(url.pathname.split("/")[2]), uc=useCases.get(name); if(!uc)return send(res,404,{error:"Unknown use case"});
-      const input=await body(req); let result;
-      for(const step of uc.steps){if(step.invoke){const inv=step.invoke, entityInput=inv.entity.startsWith("$")?inv.entity.slice(1):null;const recordId=entityInput?input[entityInput]:input.id;const args={};for(const [k,v] of Object.entries(inv.arguments||{}))args[k]=typeof v==="string"&&v.startsWith("$")?input[v.slice(1)]:v;result=store.execute(entityInput?uc.inputs[entityInput].entity:inv.entity,inv.operation,{id:recordId,data:args});}}
-      return send(res,200,{useCase:name,outcome:uc.outcome,result});
+      const input=await body(req); let result; const results=[];
+      for(let index=0; index<uc.steps.length; index++){const step=uc.steps[index];if(step.invoke){const inv=step.invoke, entityInput=inv.entity.startsWith("$")?inv.entity.slice(1):null;const recordId=entityInput?input[entityInput]:input.id;const args={};for(const [k,v] of Object.entries(inv.arguments||{}))args[k]=typeof v==="string"&&v.startsWith("$")?input[v.slice(1)]:v;result=store.execute(entityInput?uc.inputs[entityInput].entity:inv.entity,inv.operation,{id:recordId,data:args});results.push({step:index+1,title:step.title||inv.operation,result});}}
+      return send(res,200,{useCase:name,outcome:uc.outcome,result,results});
     }
 
     const parts = url.pathname.split("/").filter(Boolean);
