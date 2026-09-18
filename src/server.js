@@ -33,6 +33,12 @@ const server = http.createServer(async (req, res) => {
       if (!entity) return send(res, 404, { error: "Unknown entity" });
       if (req.method === "GET" && !id) return send(res, 200, store.list(entity, Object.fromEntries(url.searchParams)));
       if (req.method === "GET" && id) return send(res, store.get(entity, decodeURIComponent(id)) ? 200 : 404, store.get(entity, decodeURIComponent(id)) ?? { error: "Not found" });
+      if (req.method === "POST" && !id) return send(res, 201, store.execute(entity, "create", { data: await body(req) }));
+      if (req.method === "PATCH" && id) {
+        const value = store.execute(entity, "update", { id: decodeURIComponent(id), data: await body(req) });
+        return send(res, value ? 200 : 404, value ?? { error: "Not found" });
+      }
+      if (req.method === "DELETE" && id) return send(res, store.execute(entity, "delete", { id: decodeURIComponent(id) }) ? 204 : 404);
     }
 
     const [, api, collection, id] = url.pathname.split("/");
