@@ -2,7 +2,7 @@ import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadEntities } from "./knowledge.js";
+import { loadEntities, loadUseCases } from "./knowledge.js";
 import { MemoryStore } from "./store.js";
 import { loadSeed } from "./seed.js";
 
@@ -11,6 +11,7 @@ const root = path.resolve(here, "..");
 const knowledgeDir = process.env.MDE_KNOWLEDGE || path.join(root, "sample/entities");
 const seedFile = process.env.MDE_SEED || path.join(root, "sample/seed/data.json");
 const entities = loadEntities(knowledgeDir);
+const useCases = loadUseCases(process.env.MDE_USE_CASES || path.join(root, "sample/use-cases"));
 const store = new MemoryStore(entities);
 if (fs.existsSync(seedFile)) loadSeed(store, seedFile);
 
@@ -26,6 +27,13 @@ const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, "http://localhost");
     if (req.method === "GET" && url.pathname === "/") return html(res, fs.readFileSync(path.join(root, "public/index.html"), "utf8"));
     if (req.method === "GET" && url.pathname === "/model") return send(res, 200, modelObject());
+    if (req.method === "GET" && url.pathname === "/use-cases") return send(res, 200, Object.fromEntries(useCases));
+    if (req.method === "POST" && url.pathname.startsWith("/use-cases/") && url.pathname.endsWith("/run")) {
+      const name=decodeURIComponent(url.pathname.split("/")[2]), uc=useCases.get(name); if(!uc)return send(res,404,{error:"Unknown use case"});
+      const input=await body(req); let result;
+      for(const step of uc.steps){if(step.invoke){const inv=step.invoke, entityInput=inv.entity.startsWith("$")?inv.entity.slice(1):null;const recordId=entityInput?input[entityInput]:input.id;const args={};for(const [k,v] of Object.entries(inv.arguments||{}))args[k]=typeof v==="string"&&v.startsWith("$")?input[v.slice(1)]:v;result=store.execute(entityInput?uc.inputs[entityInput].entity:inv.entity,inv.operation,{id:recordId,data:args});}}
+      return send(res,200,{useCase:name,outcome:uc.outcome,result});
+    }
 
     const parts = url.pathname.split("/").filter(Boolean);
     if (parts[0] === "data") {
