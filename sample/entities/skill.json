@@ -1,0 +1,33 @@
+{
+  "type": "entity",
+  "name": "Skill",
+  "key": "skillId",
+  "display": "name",
+  "attributes": {
+    "skillId": {
+      "type": "uuid",
+      "generated": true
+    },
+    "name": {
+      "type": "string",
+      "required": true
+    }
+  },
+  "operations": {
+    "create": {
+      "action": "create"
+    },
+    "get": {
+      "action": "get"
+    },
+    "list": {
+      "action": "list"
+    },
+    "update": {
+      "action": "update"
+    },
+    "delete": {
+      "action": "delete"
+    }
+  }
+}
