@@ -1,0 +1,55 @@
+{
+  "type": "entity",
+  "name": "EmployeeAssignment",
+  "key": "assignmentId",
+  "display": "employee",
+  "attributes": {
+    "assignmentId": {
+      "type": "uuid",
+      "generated": true
+    },
+    "project": {
+      "type": "reference",
+      "entity": "Project",
+      "required": true
+    },
+    "employee": {
+      "type": "reference",
+      "entity": "Employee",
+      "required": true
+    },
+    "allocation": {
+      "type": "number",
+      "required": true
+    },
+    "role": {
+      "type": "string",
+      "required": true
+    },
+    "status": {
+      "type": "enum",
+      "values": [
+        "Active",
+        "Completed"
+      ],
+      "default": "Active"
+    }
+  },
+  "operations": {
+    "create": {
+      "action": "create"
+    },
+    "get": {
+      "action": "get"
+    },
+    "list": {
+      "action": "list"
+    },
+    "update": {
+      "action": "update"
+    },
+    "delete": {
+      "action": "delete"
+    }
+  }
+}
