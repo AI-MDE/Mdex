@@ -3,10 +3,12 @@ import path from "node:path";
 
 export function loadEntities(directory) {
   const entities = new Map();
+  entities.sourceFiles = new Map();
   for (const file of fs.readdirSync(directory).filter(f => f.endsWith(".json"))) {
     const artifact = JSON.parse(fs.readFileSync(path.join(directory, file), "utf8"));
     if (artifact.type !== "entity" || !artifact.name || !artifact.attributes) throw new Error(`Invalid entity artifact: ${file}`);
     entities.set(artifact.name, artifact);
+    entities.sourceFiles.set(artifact.name, path.join(directory, file));
   }
   return entities;
 }
@@ -39,6 +41,10 @@ export function validateArchitecture(architecture, entities, useCases) {
       for (const [relationship,s] of Object.entries(e.children||{})) { const child=entities.get(s.entity),foreignKey=child?.attributes?.[s.foreignKey];add(!!child&&foreignKey?.type==="reference"&&foreignKey.entity===name?"Pass":"Fail",name+"."+relationship,child?`Child relationship uses ${s.entity}.${s.foreignKey}.`:`Unknown child entity ${s.entity}.`); }
     }
     if (architecture.constraints?.operationsMustDeclareAction) for (const [op,s] of Object.entries(e.operations||{})) add(s.action?"Pass":"Fail",name+"."+op,s.action?"Operation action is declared.":"Operation action is missing.");
+    if (architecture.constraints?.rulesMustResolve) {
+      for (const [operation,spec] of Object.entries(e.operations||{})) for (const rule of spec.rules||[]) add(!!e.rules?.[rule]?"Pass":"Fail",name+"."+operation,!!e.rules?.[rule]?`Rule ${rule} exists.`:`Unknown rule ${name}.${rule}.`);
+      for (const [transition,spec] of Object.entries(e.transitions||{})) for (const rule of spec.rules||[]) add(!!e.rules?.[rule]?"Pass":"Fail",name+"."+transition,!!e.rules?.[rule]?`Rule ${rule} exists.`:`Unknown rule ${name}.${rule}.`);
+    }
   }
   if (architecture.constraints?.useCaseInvokesDeclaredOperations) for (const [name,u] of useCases) for (const step of u.steps||[]) if(step.invoke){const ref=step.invoke.entity;const input=typeof ref==="string"&&ref.startsWith("$")?u.inputs?.[ref.slice(1)]:null;const entity=input?.entity||ref;add(entities.get(entity)?.operations?.[step.invoke.operation]?"Pass":"Fail",name,entities.get(entity)?.operations?.[step.invoke.operation]?`Operation ${entity}.${step.invoke.operation} exists.`:`Unknown operation ${entity}.${step.invoke.operation}.`);}
   return findings;

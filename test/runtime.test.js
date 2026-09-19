@@ -2,9 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
 import { fileURLToPath } from "node:url";
 import { MemoryStore } from "../src/store.js";
 import { validateArchitecture } from "../src/knowledge.js";
+import { EntityDesignService, EntityDesignError } from "../src/entity-design.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -279,4 +281,129 @@ test("architecture validation checks child relationship design", () => {
   const invalid = new Map(entities);
   invalid.set("Department",{...invalid.get("Department"),children:{missing:{entity:"Missing",foreignKey:"department"}}});
   assert.equal(validateArchitecture(architecture,invalid,new Map()).find(x=>x.subject==="Department.missing").status,"Fail");
+});
+
+test("explicit rule kinds separate preconditions from constraints", () => {
+  const behavioral = new Map([["Thing",{
+    type:"entity",name:"Thing",key:"thingId",
+    attributes:{thingId:{type:"uuid",generated:true},status:{type:"string",default:"Open"},owner:{type:"string"}},
+    operations:{create:{action:"create"},assign:{action:"custom",set:{owner:"$owner"},rules:["open-only"]},update:{action:"update"}},
+    rules:{
+      "open-only":{kind:"precondition",when:{status:"Open"},message:"Thing must be open."},
+      "closed-no-owner":{kind:"constraint",when:{status:"Closed"},forbid:{owner:"present"},message:"Closed things cannot have an owner."}
+    }
+  }]]);
+  const store = new MemoryStore(behavioral),thing=store.execute("Thing","create",{});
+  store.execute("Thing","assign",{id:thing.thingId,owner:"Ada"});
+  assert.throws(()=>store.execute("Thing","update",{id:thing.thingId,data:{status:"Closed"}}),/cannot have an owner/);
+});
+
+test("architecture validation resolves operation and transition rules", () => {
+  const governed = new Map([["Thing",{type:"entity",name:"Thing",key:"thingId",attributes:{thingId:{type:"uuid"}},operations:{run:{action:"custom",rules:["missing"]}},transitions:{finish:{from:["Open"],to:"Done",rules:["also-missing"]}},rules:{}}]]);
+  const findings=validateArchitecture({constraints:{rulesMustResolve:true}},governed,new Map()).filter(finding=>finding.status==="Fail");
+  assert.deepEqual(findings.map(finding=>finding.message),["Unknown rule Thing.missing.","Unknown rule Thing.also-missing."]);
+});
+
+test("Workbench pages have smart URLs and browser back navigation", () => {
+  const workbench = fs.readFileSync(path.join(here, "../public/index.html"), "utf8");
+  assert.match(workbench, /onclick="history\.back\(\)"/);
+  assert.match(workbench, /window\.addEventListener\("popstate",renderRoute\)/);
+  assert.match(workbench, /async function renderRoute\(\)/);
+  assert.match(workbench, /#\/entities\//);
+  assert.match(workbench, /\/use-cases\//);
+  assert.match(workbench, /\/architecture\/edit/);
+  assert.match(workbench, /\/design\/edit/);
+});
+
+test("Entity Editor supports inline attribute and relationship CRUD", () => {
+  const workbench = fs.readFileSync(path.join(here, "../public/index.html"), "utf8");
+  assert.match(workbench, /async function structuredEntityEditor\(name\)/);
+  assert.match(workbench, /id="attribute-editor-body"/);
+  assert.match(workbench, />\+ Add Attribute<\/button>/);
+  assert.match(workbench, /id="relationship-editor-body"/);
+  assert.match(workbench, />\+ Add Relationship<\/button>/);
+  assert.match(workbench, />Delete<\/button>/);
+  assert.match(workbench, />Save Entity<\/button>/);
+});
+
+test("entity design behavior is encapsulated in a service class", () => {
+  const server = fs.readFileSync(path.join(here, "../src/server.js"), "utf8");
+  assert.match(server, /new EntityDesignService/);
+  assert.match(server, /result=entityDesign\.update\(name,await body\(req\)\)/);
+});
+
+test("EntityDesignService validates completely and commits atomically", () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "mdex-design-"));
+  try {
+    const file = path.join(directory, "thing.json");
+    const entity = {type:"entity",name:"Thing",key:"thingId",attributes:{thingId:{type:"uuid",generated:true},status:{type:"string"}},operations:{create:{action:"create"}}};
+    fs.writeFileSync(file,JSON.stringify(entity));
+    const entities = new Map([["Thing",entity]]);
+    entities.sourceFiles = new Map([["Thing",file]]);
+    const architecture = {entityDesign:{sections:{attributes:"object",children:"object",operations:"object",rules:"object",states:"object",transitions:"object",elementOrder:"array"},features:["auditStamp","trackHistory"]},constraints:{entitiesRequireKey:true,operationsMustDeclareAction:true}};
+    const service = new EntityDesignService({entities,useCases:new Map(),architecture:()=>architecture});
+    assert.throws(() => service.update("Thing",{stateAttribute:"missing",architectureFeatures:{auditStamp:"yes",trackHistory:false}}), error => {
+      assert.ok(error instanceof EntityDesignError);
+      assert.deepEqual(error.violations.map(value=>value.field).sort(),["auditStamp","stateAttribute"]);
+      return true;
+    });
+    assert.throws(() => service.update("Thing",{rules:{broken:{kind:"mystery",when:{missing:true}}},architectureFeatures:{auditStamp:false,trackHistory:false}}), error => {
+      assert.deepEqual(error.violations.map(value=>value.field).sort(),["broken.kind","broken.message","broken.when.missing"]);
+      return true;
+    });
+    const original = entities.get("Thing");
+    const result = service.update("Thing",{stateAttribute:"status",architectureFeatures:{auditStamp:true,trackHistory:false}});
+    assert.notEqual(result.entity,original);
+    assert.equal(result.entity.stateAttribute,"status");
+    assert.ok(result.findings.every(value=>value.status==="Pass"));
+    assert.deepEqual(JSON.parse(fs.readFileSync(file,"utf8")),result.entity);
+    assert.equal(fs.readdirSync(directory).filter(name=>name.endsWith(".tmp")).length,0);
+  } finally { fs.rmSync(directory,{recursive:true,force:true}); }
+});
+
+test("Entity Editor supports inline operation, rule, state, and transition CRUD", () => {
+  const workbench = fs.readFileSync(path.join(here, "../public/index.html"), "utf8");
+  assert.match(workbench, /async function fullStructuredEntityEditor\(name\)/);
+  assert.match(workbench, /id="operation-editor-body"/);
+  assert.match(workbench, />\+ Add Operation<\/button>/);
+  assert.match(workbench, /id="rule-editor-body"/);
+  assert.match(workbench, />\+ Add Rule<\/button>/);
+  assert.match(workbench, /id="state-editor-body"/);
+  assert.match(workbench, />\+ Add State<\/button>/);
+  assert.match(workbench, /id="transition-editor-body"/);
+  assert.match(workbench, />\+ Add Transition<\/button>/);
+});
+
+test("Entity Editor merges attributes and relations into an ordered design list", () => {
+  const workbench = fs.readFileSync(path.join(here, "../public/index.html"), "utf8");
+  assert.match(workbench, /id="design-element-body"/);
+  assert.match(workbench, />\+ Add Attribute<\/button>/);
+  assert.match(workbench, />\+ Add Relation<\/button>/);
+  assert.match(workbench, /function setupDesignBlocks\(\)/);
+  assert.match(workbench, /row\.draggable=true/);
+  assert.match(workbench, /dragover/);
+  assert.match(workbench, /foreignKey\.type="hidden"/);
+  assert.match(workbench, /class="re-entity"/);
+  assert.match(workbench, /class="re-label"/);
+  assert.match(workbench, /spec\.type==="reference"/);
+  assert.match(workbench, /data-kind="reference"/);
+  assert.match(workbench, /class="ae-label"/);
+  assert.match(workbench, /options\.body=\{\.\.\.options\.body,elementOrder\}/);
+});
+
+test("EntityDesignService persists mixed element order", () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "mdex-order-"));
+  try {
+    const file = path.join(directory, "thing.json");
+    const entity = {type:"entity",name:"Thing",key:"thingId",attributes:{thingId:{type:"uuid",generated:true},name:{type:"string"}},children:{parts:{entity:"Thing",foreignKey:"thingId",label:"Parts"}},operations:{create:{action:"create"}}};
+    fs.writeFileSync(file,JSON.stringify(entity));
+    const entities = new Map([["Thing",entity]]);
+    entities.sourceFiles = new Map([["Thing",file]]);
+    const architecture = {entityDesign:{sections:{attributes:"object",children:"object",operations:"object",rules:"object",states:"object",transitions:"object",elementOrder:"array"},features:["auditStamp","trackHistory"]},constraints:{entitiesRequireKey:true,operationsMustDeclareAction:true}};
+    const service = new EntityDesignService({entities,useCases:new Map(),architecture:()=>architecture});
+    const elementOrder = [{kind:"attribute",name:"thingId"},{kind:"relationship",name:"parts"},{kind:"attribute",name:"name"}];
+    const result = service.update("Thing",{elementOrder,architectureFeatures:{auditStamp:false,trackHistory:false}});
+    assert.deepEqual(result.entity.elementOrder,elementOrder);
+    assert.deepEqual(JSON.parse(fs.readFileSync(file,"utf8")).elementOrder,elementOrder);
+  } finally { fs.rmSync(directory,{recursive:true,force:true}); }
 });

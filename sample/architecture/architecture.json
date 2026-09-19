@@ -2,6 +2,18 @@
   "type": "architecture",
   "name": "DefaultArchitecture",
   "title": "MDEX Application Architecture",
+  "entityDesign": {
+    "sections": {
+      "attributes": "object",
+      "children": "object",
+      "operations": "object",
+      "rules": "object",
+      "states": "object",
+      "transitions": "object",
+      "elementOrder": "array"
+    },
+    "features": ["auditStamp", "trackHistory"]
+  },
   "principles": [
     "Business behavior is executed through declared entity operations.",
     "Business rules are enforced by the runtime, not by presentation code.",
@@ -13,6 +25,7 @@
     "entitiesRequireKey": true,
     "referencesMustTargetEntity": true,
     "operationsMustDeclareAction": true,
+    "rulesMustResolve": true,
     "useCaseInvokesDeclaredOperations": true,
     "hideGeneratedKeys": true,
     "referenceDisplay": "business-label",

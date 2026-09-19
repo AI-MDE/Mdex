@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { loadEntities, loadUseCases, loadArchitecture, validateArchitecture } from "./knowledge.js";
 import { MemoryStore } from "./store.js";
 import { loadSeed } from "./seed.js";
+import { EntityDesignService } from "./entity-design.js";
 import console from "node:console";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -40,8 +41,9 @@ function entityFromPath(segment) {
   return [...entities.keys()].find(name => name.toLowerCase() === wanted || `${name.toLowerCase()}s` === wanted);
 }
 function modelObject() { return Object.fromEntries(entities); }
-function entityFile(name){for(const file of fs.readdirSync(knowledgeDir).filter(x=>x.endsWith(".json"))){const full=path.join(knowledgeDir,file),artifact=JSON.parse(fs.readFileSync(full,"utf8"));if(artifact.name===name)return full}return undefined}
 function requestActor(req){return req.headers["x-actor"]||"Workbench user"}
+
+const entityDesign = new EntityDesignService({entities,useCases,knowledgeDir,architecture:()=>architecture});
 
 const server = http.createServer(async (req, res) => {
   try {
@@ -49,7 +51,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "GET" && url.pathname === "/") return html(res, fs.readFileSync(path.join(root, "public/index.html"), "utf8"));
     if (req.method === "GET" && url.pathname === "/version") return send(res, 200, { version: packageInfo.version, instanceId });
     if (req.method === "GET" && url.pathname === "/model") return send(res, 200, modelObject());
-    if (req.method === "PATCH" && url.pathname.startsWith("/model/") && url.pathname.endsWith("/design")) { const name=decodeURIComponent(url.pathname.split("/")[2]),entity=entities.get(name),file=entityFile(name);if(!entity||!file)return send(res,404,{error:"Unknown entity"});const data=await body(req),proposed={...entity};if(data.architectureFeatures!==undefined){const features=data.architectureFeatures;if(!features||typeof features!=="object"||["auditStamp","trackHistory"].some(key=>typeof features[key]!=="boolean"))return send(res,400,{error:"auditStamp and trackHistory must be boolean"});proposed.architectureFeatures={auditStamp:features.auditStamp,trackHistory:features.trackHistory}}for(const section of ["attributes","children","operations","rules","states","transitions"])if(data[section]!==undefined){if(!data[section]||Array.isArray(data[section])||typeof data[section]!=="object")return send(res,400,{error:section+" must be an object"});proposed[section]=data[section]}if(data.stateAttribute!==undefined)proposed.stateAttribute=data.stateAttribute||undefined;if(!proposed.attributes?.[proposed.key])return send(res,400,{error:"The system key must remain a declared attribute"});const proposedEntities=new Map(entities);proposedEntities.set(name,proposed),findings=validateArchitecture(architecture,proposedEntities,useCases),failures=findings.filter(x=>x.status==="Fail");if(failures.length)return send(res,400,{error:"Entity design validation failed: "+failures.map(x=>x.subject+": "+x.message).join("; ")});fs.writeFileSync(file,JSON.stringify(proposed,null,2));Object.keys(entity).forEach(key=>delete entity[key]);Object.assign(entity,proposed);return send(res,200,entity); }
+    if (req.method === "PATCH" && url.pathname.startsWith("/model/") && url.pathname.endsWith("/design")) { const name=decodeURIComponent(url.pathname.split("/")[2]),result=entityDesign.update(name,await body(req));architectureFindings=result.findings;return send(res,200,{...result.entity,findings:result.findings}); }
     if (req.method === "GET" && url.pathname === "/use-cases") return send(res, 200, Object.fromEntries(useCases));
     if (req.method === "GET" && url.pathname === "/architecture") return send(res, 200, {architecture,findings:architectureFindings});
     if (req.method === "PATCH" && url.pathname === "/architecture") { const data=await body(req); if(data.title!==undefined&&typeof data.title!=="string")return send(res,400,{error:"Architecture title must be text"}); if(data.principles!==undefined&&(!Array.isArray(data.principles)||data.principles.some(x=>typeof x!=="string"||!x.trim())))return send(res,400,{error:"Architecture principles must be non-empty text"}); if(data.constraints!==undefined&&(!data.constraints||Array.isArray(data.constraints)||typeof data.constraints!=="object"))return send(res,400,{error:"Architecture constraints must be an object"}); const proposed={...architecture,title:data.title??architecture.title,principles:data.principles?.map(x=>x.trim())??architecture.principles,constraints:data.constraints??architecture.constraints}; const findings=validateArchitecture(proposed,entities,useCases),failures=findings.filter(x=>x.status==="Fail"); if(failures.length)return send(res,400,{error:"Architecture validation failed: "+failures.map(x=>x.subject+": "+x.message).join("; ")}); fs.writeFileSync(architectureFile,JSON.stringify(proposed,null,2)); architecture=proposed;architectureFindings=findings;return send(res,200,{architecture,findings}); }
@@ -93,7 +95,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "DELETE" && id) {const deleted=store.execute(entity,"delete",{id,actor:requestActor(req)});if(deleted)saveData();return send(res,deleted?204:404)}
     if (req.method === "POST" && id) {const value=store.execute(entity,decodeURIComponent(id),{...await body(req),actor:requestActor(req)});saveData();return send(res,200,value)}
     return send(res, 405, { error: "Method not allowed" });
-  } catch (error) { return send(res, 400, { error: error.message }); }
+  } catch (error) { return send(res, error.status || 400, { error: error.message, violations:error.violations||[] }); }
 });
 function body(req){return new Promise((resolve,reject)=>{let raw="";req.on("data",c=>raw+=c);req.on("end",()=>{try{resolve(raw?JSON.parse(raw):{})}catch(e){reject(e)}})})}
 function send(res,status,value){res.statusCode=status;if(status===204)return res.end();res.setHeader("content-type","application/json");res.end(JSON.stringify(value))}

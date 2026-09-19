@@ -1,0 +1,6 @@
+- Since we are mixing attributes and Releations into one list , need to merge the list
+- and two buttons add Attribute , Add Relation 
+- move attr/rel around
+- More detailed Editor for relations with a drop down for target and lable
+
+

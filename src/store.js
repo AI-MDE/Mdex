@@ -113,14 +113,20 @@ export class MemoryStore {
     for (const name of names) {
       const rule = entity.rules?.[name];
       if (!rule) throw new Error(`Unknown rule: ${entity.name}.${name}`);
+      const kind = rule.kind ?? (rule.forbid ? "constraint" : "precondition");
+      if (kind !== "precondition") throw new Error(`Rule ${entity.name}.${name} is not a precondition`);
       if (rule.when && !Object.entries(rule.when).every(([k,v]) => record[k] === v)) throw new Error(rule.message || rule.description || name);
     }
   }
 
   #checkConstraints(entity, record) {
-    for (const rule of Object.values(entity.rules ?? {})) {
-      if (!rule.forbid || !rule.when || !Object.entries(rule.when).every(([k,v]) => record[k] === v)) continue;
-      for (const [field, condition] of Object.entries(rule.forbid)) if (condition === "present" && record[field] != null && record[field] !== "") throw new Error(rule.message || rule.description);
+    for (const [name, rule] of Object.entries(entity.rules ?? {})) {
+      const kind = rule.kind ?? (rule.forbid ? "constraint" : "precondition");
+      if (kind !== "constraint" || !rule.when || !Object.entries(rule.when).every(([k,v]) => record[k] === v)) continue;
+      for (const [field, condition] of Object.entries(rule.forbid ?? {})) {
+        if (condition !== "present") throw new Error(`Unsupported rule condition: ${entity.name}.${name}.${field} ${condition}`);
+        if (record[field] != null && record[field] !== "") throw new Error(rule.message || rule.description || `Constraint ${entity.name}.${name} failed`);
+      }
     }
   }
 

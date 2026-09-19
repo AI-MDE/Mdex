@@ -117,6 +117,7 @@
   },
   "rules": {
     "active-only": {
+      "kind": "precondition",
       "description": "The employee must be active.",
       "when": {
         "status": "Active"
@@ -124,6 +125,7 @@
       "message": "Employee must be active."
     },
     "terminated-no-department": {
+      "kind": "constraint",
       "description": "A terminated employee cannot be assigned to a department.",
       "when": {
         "status": "Terminated"

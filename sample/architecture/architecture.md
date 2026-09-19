@@ -16,6 +16,7 @@ Define architecture decisions that the MDEX runtime and Workbench can understand
 | Every entity has a valid key | Architecture validation |
 | References target known entities | Architecture validation and runtime |
 | Operations declare an action | Architecture validation and runtime |
+| Operation and transition rules resolve | Architecture validation |
 | Use cases invoke declared operations | Architecture validation |
 | Generated technical keys are hidden | Workbench presentation |
 | References use business labels | Workbench presentation |

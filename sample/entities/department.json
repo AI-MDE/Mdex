@@ -34,7 +34,7 @@
     }
   },
   "architectureFeatures": {
-    "auditStamp": true,
-    "trackHistory": true
+    "trackHistory": true,
+    "auditStamp": true
   }
 }
