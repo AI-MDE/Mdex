@@ -1,0 +1,240 @@
+{
+  "type": "feature-catalog",
+  "version": "0.1",
+  "description": "Reusable MDEX features that can be selected and configured on semantic model concepts.",
+  "features": [
+    {
+      "name": "audit",
+      "label": "Auditing",
+      "appliesTo": [
+        "entity"
+      ],
+      "description": "Framework-managed creation, update and history metadata.",
+      "options": {
+        "created": {
+          "type": "boolean",
+          "default": true,
+          "description": "Record when an instance was created."
+        },
+        "createdBy": {
+          "type": "boolean",
+          "default": false,
+          "description": "Record who created an instance."
+        },
+        "updated": {
+          "type": "boolean",
+          "default": true,
+          "description": "Record when an instance was last updated."
+        },
+        "updatedBy": {
+          "type": "boolean",
+          "default": false,
+          "description": "Record who last updated an instance."
+        },
+        "history": {
+          "type": "enum",
+          "values": [
+            "none",
+            "state",
+            "full"
+          ],
+          "default": "none",
+          "description": "none = timestamps only; state = state value/date history; full = complete entity history."
+        }
+      }
+    },
+    {
+      "name": "bookmark",
+      "label": "Bookmark",
+      "appliesTo": [
+        "entity"
+      ],
+      "description": "Allow a user to bookmark an entity instance for quick access."
+    },
+    {
+      "name": "saveForLater",
+      "label": "Save for Later",
+      "appliesTo": [
+        "entity",
+        "use-case"
+      ],
+      "description": "Allow a user to save an object or unfinished activity for later."
+    },
+    {
+      "name": "share",
+      "label": "Send / Share",
+      "appliesTo": [
+        "entity"
+      ],
+      "description": "Allow an entity instance to be sent or shared with another user."
+    },
+    {
+      "name": "inbox",
+      "label": "Inbox",
+      "appliesTo": [
+        "application"
+      ],
+      "description": "Receive objects, requests, notifications or messages."
+    },
+    {
+      "name": "outbox",
+      "label": "Outbox",
+      "appliesTo": [
+        "application"
+      ],
+      "description": "Track objects or messages sent by a user."
+    },
+    {
+      "name": "messaging",
+      "label": "Messaging",
+      "appliesTo": [
+        "application",
+        "entity"
+      ],
+      "description": "Support user-to-user messages, optionally in the context of an entity instance."
+    },
+    {
+      "name": "assign",
+      "label": "Assignment",
+      "appliesTo": [
+        "entity",
+        "use-case"
+      ],
+      "description": "Assign responsibility for an object or activity to another user."
+    },
+    {
+      "name": "follow",
+      "label": "Follow",
+      "appliesTo": [
+        "entity"
+      ],
+      "description": "Allow users to follow an entity instance and receive relevant changes."
+    },
+    {
+      "name": "comment",
+      "label": "Comments",
+      "appliesTo": [
+        "entity"
+      ],
+      "description": "Attach user discussion to an entity instance."
+    },
+    {
+      "name": "mention",
+      "label": "Mentions",
+      "appliesTo": [
+        "entity"
+      ],
+      "description": "Allow users to mention another user in object-related collaboration."
+    },
+    {
+      "name": "notification",
+      "label": "Notifications",
+      "appliesTo": [
+        "entity",
+        "operation",
+        "use-case"
+      ],
+      "description": "Notify interested users when relevant events occur."
+    },
+    {
+      "name": "stateMachine",
+      "label": "State Machine",
+      "appliesTo": [
+        "entity"
+      ],
+      "description": "Define states, transitions and guarded state changes."
+    },
+    {
+      "name": "authorization",
+      "label": "Authorization",
+      "appliesTo": [
+        "entity",
+        "operation",
+        "use-case"
+      ],
+      "description": "Control who may view or execute semantic capabilities."
+    },
+    {
+      "name": "search",
+      "label": "Search / Query",
+      "appliesTo": [
+        "entity"
+      ],
+      "description": "Enable model-driven searching, filtering and sorting."
+    },
+    {
+      "name": "pagination",
+      "label": "Pagination",
+      "appliesTo": [
+        "entity",
+        "relation"
+      ],
+      "description": "Page large instance collections."
+    },
+    {
+      "name": "softDelete",
+      "label": "Soft Delete",
+      "appliesTo": [
+        "entity"
+      ],
+      "description": "Retain deleted instances rather than physically removing them."
+    },
+    {
+      "name": "ordering",
+      "label": "Ordering",
+      "appliesTo": [
+        "relation"
+      ],
+      "description": "Maintain explicit ordering of related child instances."
+    },
+    {
+      "name": "attachment",
+      "label": "Attachment",
+      "appliesTo": [
+        "attribute"
+      ],
+      "description": "Treat an attribute as a managed file or document attachment."
+    },
+    {
+      "name": "unique",
+      "label": "Unique",
+      "appliesTo": [
+        "attribute"
+      ],
+      "description": "Require attribute values to be unique."
+    },
+    {
+      "name": "required",
+      "label": "Required",
+      "appliesTo": [
+        "attribute"
+      ],
+      "description": "Require an attribute value."
+    },
+    {
+      "name": "generated",
+      "label": "Generated",
+      "appliesTo": [
+        "attribute"
+      ],
+      "description": "Have the runtime generate and manage the attribute value."
+    },
+    {
+      "name": "display",
+      "label": "Display Value",
+      "appliesTo": [
+        "attribute"
+      ],
+      "description": "Use the attribute as part of the human-readable identity of an entity."
+    },
+    {
+      "name": "async",
+      "label": "Asynchronous Execution",
+      "appliesTo": [
+        "operation",
+        "use-case"
+      ],
+      "description": "Execute an operation or use case asynchronously."
+    }
+  ]
+}
