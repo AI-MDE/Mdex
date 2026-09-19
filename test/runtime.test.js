@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { MemoryStore } from "../src/store.js";
+import { validateArchitecture } from "../src/knowledge.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -182,6 +183,26 @@ test("every entity exposes generic design options", () => {
   assert.match(server, /url\.pathname\.endsWith\("\/design"\)/);
 });
 
+test("entity design page includes semantic model sections", () => {
+  const workbench = fs.readFileSync(path.join(here, "../public/index.html"), "utf8");
+  assert.match(workbench, /Entity Design<\/h2>/);
+  assert.match(workbench, /<h3>Attributes<\/h3>/);
+  assert.match(workbench, /<h3>Relationships<\/h3>/);
+  assert.match(workbench, /<h3>Operations<\/h3>/);
+  assert.match(workbench, /<h3>Rules<\/h3>/);
+  assert.match(workbench, /<h3>States & Transitions<\/h3>/);
+  assert.match(workbench, /entity\.stateAttribute/);
+  assert.match(workbench, /entity\.transitions/);
+  assert.match(workbench, /onclick="editEntityModel\('\$\{name\}'\)">Edit Model<\/button>/);
+  assert.match(workbench, /async function editEntityModel\(name\)/);
+  assert.match(workbench, />Save Entity Design<\/button>/);
+  assert.match(workbench, /smartField\("Operations","operations"/);
+  assert.match(workbench, /Smart Editor ·/);
+  assert.match(workbench, /function addSmartItem\(name\)/);
+  assert.match(workbench, /function validateSmartEditor\(\)/);
+  assert.match(workbench, /id="save-entity-model"/);
+});
+
 test("records expose system details behind a separate icon", () => {
   const workbench = fs.readFileSync(path.join(here, "../public/index.html"), "utf8");
   assert.match(workbench, /aria-label="System details"/);
@@ -225,4 +246,37 @@ test("enum fields use dropdowns and child collections are editable", () => {
   assert.match(workbench, /async function removeChild\(parent,parentId,key,childId\)/);
   assert.match(workbench, />\+ Add<\/button>/);
   assert.match(workbench, />Remove<\/button>/);
+});
+
+test("Employee owns editable Performance Reviews", () => {
+  const employee = JSON.parse(fs.readFileSync(path.join(here, "../sample/entities/employee.json"), "utf8"));
+  const review = JSON.parse(fs.readFileSync(path.join(here, "../sample/entities/performance-review.json"), "utf8"));
+  assert.deepEqual(employee.children.performanceReviews, {
+    entity:"PerformanceReview", foreignKey:"employee", ownership:"composition", label:"Performance Reviews"
+  });
+  assert.equal(review.attributes.employee.entity,"Employee");
+  assert.deepEqual(review.attributes.rating.values,["Needs Improvement","Meets Expectations","Exceeds Expectations","Outstanding"]);
+  assert.equal(review.operations.create.action,"create");
+  assert.equal(review.operations.update.action,"update");
+  assert.equal(review.operations.delete.action,"delete");
+});
+
+test("Employee owns editable Leave records", () => {
+  const employee = JSON.parse(fs.readFileSync(path.join(here, "../sample/entities/employee.json"), "utf8"));
+  const leave = JSON.parse(fs.readFileSync(path.join(here, "../sample/entities/leave.json"), "utf8"));
+  assert.deepEqual(employee.children.leave, {
+    entity:"Leave", foreignKey:"employee", ownership:"composition", label:"Leave"
+  });
+  assert.equal(leave.attributes.employee.entity,"Employee");
+  assert.deepEqual(leave.attributes.status.values,["Requested","Approved","Rejected","Cancelled"]);
+  assert.equal(leave.operations.create.action,"create");
+  assert.equal(leave.operations.update.action,"update");
+  assert.equal(leave.operations.delete.action,"delete");
+});
+
+test("architecture validation checks child relationship design", () => {
+  const architecture = {constraints:{referencesMustTargetEntity:true}};
+  const invalid = new Map(entities);
+  invalid.set("Department",{...invalid.get("Department"),children:{missing:{entity:"Missing",foreignKey:"department"}}});
+  assert.equal(validateArchitecture(architecture,invalid,new Map()).find(x=>x.subject==="Department.missing").status,"Fail");
 });

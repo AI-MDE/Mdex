@@ -147,6 +147,18 @@
       "foreignKey": "employee",
       "ownership": "association",
       "label": "Assignments"
+    },
+    "performanceReviews": {
+      "entity": "PerformanceReview",
+      "foreignKey": "employee",
+      "ownership": "composition",
+      "label": "Performance Reviews"
+    },
+    "leave": {
+      "entity": "Leave",
+      "foreignKey": "employee",
+      "ownership": "composition",
+      "label": "Leave"
     }
   }
 }

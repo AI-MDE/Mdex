@@ -1,0 +1,60 @@
+{
+  "type": "entity",
+  "name": "PerformanceReview",
+  "key": "performanceReviewId",
+  "display": "reviewDate",
+  "attributes": {
+    "performanceReviewId": {
+      "type": "uuid",
+      "generated": true
+    },
+    "employee": {
+      "type": "reference",
+      "entity": "Employee",
+      "required": true
+    },
+    "reviewDate": {
+      "type": "string",
+      "required": true
+    },
+    "rating": {
+      "type": "enum",
+      "values": [
+        "Needs Improvement",
+        "Meets Expectations",
+        "Exceeds Expectations",
+        "Outstanding"
+      ],
+      "required": true
+    },
+    "summary": {
+      "type": "string",
+      "required": true
+    },
+    "status": {
+      "type": "enum",
+      "values": [
+        "Draft",
+        "Completed"
+      ],
+      "default": "Draft"
+    }
+  },
+  "operations": {
+    "create": {
+      "action": "create"
+    },
+    "get": {
+      "action": "get"
+    },
+    "list": {
+      "action": "list"
+    },
+    "update": {
+      "action": "update"
+    },
+    "delete": {
+      "action": "delete"
+    }
+  }
+}

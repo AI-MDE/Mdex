@@ -34,7 +34,10 @@ export function validateArchitecture(architecture, entities, useCases) {
   const add=(status,subject,message)=>findings.push({status,subject,message});
   for (const [name,e] of entities) {
     if (architecture.constraints?.entitiesRequireKey) add(e.key && e.attributes?.[e.key] ? "Pass":"Fail",name,e.key && e.attributes?.[e.key] ? "Entity key is defined.":"Entity key is missing or not an attribute.");
-    if (architecture.constraints?.referencesMustTargetEntity) for (const [a,s] of Object.entries(e.attributes||{})) if(s.type==="reference") add(entities.has(s.entity)?"Pass":"Fail",name+"."+a,entities.has(s.entity)?"Reference target exists.":`Unknown reference target ${s.entity}.`);
+    if (architecture.constraints?.referencesMustTargetEntity) {
+      for (const [a,s] of Object.entries(e.attributes||{})) if(s.type==="reference") add(entities.has(s.entity)?"Pass":"Fail",name+"."+a,entities.has(s.entity)?"Reference target exists.":`Unknown reference target ${s.entity}.`);
+      for (const [relationship,s] of Object.entries(e.children||{})) { const child=entities.get(s.entity),foreignKey=child?.attributes?.[s.foreignKey];add(!!child&&foreignKey?.type==="reference"&&foreignKey.entity===name?"Pass":"Fail",name+"."+relationship,child?`Child relationship uses ${s.entity}.${s.foreignKey}.`:`Unknown child entity ${s.entity}.`); }
+    }
     if (architecture.constraints?.operationsMustDeclareAction) for (const [op,s] of Object.entries(e.operations||{})) add(s.action?"Pass":"Fail",name+"."+op,s.action?"Operation action is declared.":"Operation action is missing.");
   }
   if (architecture.constraints?.useCaseInvokesDeclaredOperations) for (const [name,u] of useCases) for (const step of u.steps||[]) if(step.invoke){const ref=step.invoke.entity;const input=typeof ref==="string"&&ref.startsWith("$")?u.inputs?.[ref.slice(1)]:null;const entity=input?.entity||ref;add(entities.get(entity)?.operations?.[step.invoke.operation]?"Pass":"Fail",name,entities.get(entity)?.operations?.[step.invoke.operation]?`Operation ${entity}.${step.invoke.operation} exists.`:`Unknown operation ${entity}.${step.invoke.operation}.`);}

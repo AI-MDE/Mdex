@@ -1,0 +1,66 @@
+{
+  "type": "entity",
+  "name": "Leave",
+  "key": "leaveId",
+  "display": "startDate",
+  "attributes": {
+    "leaveId": {
+      "type": "uuid",
+      "generated": true
+    },
+    "employee": {
+      "type": "reference",
+      "entity": "Employee",
+      "required": true
+    },
+    "leaveType": {
+      "type": "enum",
+      "values": [
+        "Vacation",
+        "Sick",
+        "Parental",
+        "Personal",
+        "Other"
+      ],
+      "required": true
+    },
+    "startDate": {
+      "type": "string",
+      "required": true
+    },
+    "endDate": {
+      "type": "string",
+      "required": true
+    },
+    "notes": {
+      "type": "string"
+    },
+    "status": {
+      "type": "enum",
+      "values": [
+        "Requested",
+        "Approved",
+        "Rejected",
+        "Cancelled"
+      ],
+      "default": "Requested"
+    }
+  },
+  "operations": {
+    "create": {
+      "action": "create"
+    },
+    "get": {
+      "action": "get"
+    },
+    "list": {
+      "action": "list"
+    },
+    "update": {
+      "action": "update"
+    },
+    "delete": {
+      "action": "delete"
+    }
+  }
+}

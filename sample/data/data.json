@@ -100,6 +100,17 @@
         "status": "Active"
       }
     ],
+    "Leave": [],
+    "PerformanceReview": [
+      {
+        "performanceReviewId": "55c88602-7487-4889-ad66-f6f5606a503c",
+        "employee": "emp-ada",
+        "reviewDate": "20260102",
+        "rating": "Meets Expectations",
+        "summary": "OK",
+        "status": "Draft"
+      }
+    ],
     "Project": [
       {
         "projectId": "project-apollo",
@@ -199,6 +210,8 @@
     "EmployeeAssignment": {},
     "EmployeeSkill": {},
     "Employee": {},
+    "Leave": {},
+    "PerformanceReview": {},
     "Project": {},
     "Skill": {}
   }
