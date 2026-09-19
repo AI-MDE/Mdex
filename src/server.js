@@ -36,6 +36,19 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "GET" && url.pathname === "/") return html(res, fs.readFileSync(path.join(root, "public/index.html"), "utf8"));
     if (req.method === "GET" && url.pathname === "/version") return send(res, 200, { version: packageInfo.version });
     if (req.method === "GET" && url.pathname === "/model") return send(res, 200, modelObject());
+    if (req.method === "PUT" && url.pathname.startsWith("/model/entities/")) {
+      const oldName=decodeURIComponent(url.pathname.split("/")[3]), currentEntity=entities.get(oldName);
+      if(!currentEntity)return send(res,404,{error:"Unknown entity"});
+      const artifact=await body(req);
+      if(artifact.type!=="entity"||!artifact.name||!artifact.key||!artifact.attributes?.[artifact.key])return send(res,400,{error:"Entity requires type, name, key, and a key attribute"});
+      for(const [a,x] of Object.entries(artifact.attributes))if(x.type==="reference"&&!entities.has(x.entity)&&x.entity!==artifact.name)return send(res,400,{error:`Unknown reference target ${x.entity} for ${a}`});
+      const oldFile=path.join(knowledgeDir,oldName.replace(/([a-z0-9])([A-Z])/g,"$1-$2").toLowerCase()+".json");
+      const newFile=path.join(knowledgeDir,artifact.name.replace(/([a-z0-9])([A-Z])/g,"$1-$2").toLowerCase()+".json");
+      fs.writeFileSync(newFile,JSON.stringify(artifact,null,2)+"\n");
+      if(oldFile!==newFile&&fs.existsSync(oldFile))fs.unlinkSync(oldFile);
+      entities.delete(oldName);entities.set(artifact.name,artifact);
+      return send(res,200,artifact);
+    }
     if (req.method === "GET" && url.pathname === "/use-cases") return send(res, 200, Object.fromEntries(useCases));
     if (req.method === "GET" && url.pathname === "/architecture") return send(res, 200, {architecture,findings:architectureFindings});
     if (url.pathname === "/notes" && req.method === "GET") { const target=url.searchParams.get("target"); return send(res,200,target?notes.filter(n=>n.target===target):notes); }
